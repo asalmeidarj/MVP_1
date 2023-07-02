@@ -26,18 +26,13 @@ def home():
 
 @app.post('/empresa', tags=[empresa_tag],
           responses={"200": EmpresaViewSchema, "409": ErrorSchema, "400": ErrorSchema})
-def add_empresa():
+def add_empresa(body: EmpresaBodySchema):
     """Adiciona um novo Empresa à base de dados
 
     Retorna uma representação dos empresas e comentários associados.
     """
-    body = request.get_json()
-
-    nome = body.get("nome")
-    descricao = body.get("descricao")
-
     session = Session()
-    empresa = Empresa(nome=nome, descricao=descricao)
+    empresa = Empresa(nome=body.nome, descricao=body.descricao)
      
     logger.debug(f"Adicionando empresa de nome: '{empresa.nome}'")
     try:

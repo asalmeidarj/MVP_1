@@ -3,6 +3,10 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 
+class EmpresaBodySchema(BaseModel):
+    nome: str = "NOME DA EMPRESA"
+    descricao: Optional[str] = "DESCRIÇÃO DA EMPRESA"
+
 class EmpresaBuscaSchema(BaseModel):
     id: Optional[int] = 1
     nome: Optional[str] = "NOME DA EMPRESA"

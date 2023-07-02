@@ -23,35 +23,35 @@ def home():
     return redirect('/openapi')
 
 
-# @app.post('/empresa', tags=[empresa_tag],
-#           responses={"200": EmpresaViewSchema, "409": ErrorSchema, "400": ErrorSchema})
-# def add_empresa(form: schemas):
-#     """Adiciona um novo Empresa à base de dados
+@app.post('/empresa', tags=[empresa_tag],
+          responses={"200": EmpresaViewSchema, "409": ErrorSchema, "400": ErrorSchema})
+def add_empresa(form: EmpresaSchema):
+    """Adiciona um novo Empresa à base de dados
 
-#     Retorna uma representação dos empresas e comentários associados.
-#     """
-#     session = Session()
-#     empresa = Empresa(
-#         nome=form.nome,
-#         descricao=form.descricao
-#         )
+    Retorna uma representação dos empresas e comentários associados.
+    """
+    session = Session()
+    empresa = Empresa(
+        nome=form.nome,
+        descricao=form.descricao
+        )
     
-#     logger.debug(f"Adicionando empresa de nome: '{empresa.nome}'")
-#     try:
-#         # adicionando empresa
-#         session.add(empresa)
-#         # efetivando o camando de adição de novo item na tabela
-#         session.commit()
-#         logger.debug(f"Adicionado empresa de nome: '{empresa.nome}'")
-#         return apresenta_empresa(empresa), 200
-#     except IntegrityError as e:
-#         error_msg = "Empresa de mesmo nome já salvo na base :/"
-#         logger.warning(f"Erro ao adicionar empresa '{empresa.nome}', {error_msg}")
-#         return {"mesage": error_msg}, 409
-#     except Exception as e:
-#         error_msg = "Não foi possível salvar novo item :/"
-#         logger.warning(f"Erro ao adicionar empresa '{empresa.nome}', {error_msg}")
-#         return {"mesage": error_msg}, 400
+    logger.debug(f"Adicionando empresa de nome: '{empresa.nome}'")
+    try:
+        # adicionando empresa
+        session.add(empresa)
+        # efetivando o camando de adição de novo item na tabela
+        session.commit()
+        logger.debug(f"Adicionado empresa de nome: '{empresa.nome}'")
+        return apresenta_empresa(empresa), 200
+    except IntegrityError as e:
+        error_msg = "Empresa de mesmo nome já salvo na base :/"
+        logger.warning(f"Erro ao adicionar empresa '{empresa.nome}', {error_msg}")
+        return {"mesage": error_msg}, 409
+    except Exception as e:
+        error_msg = "Não foi possível salvar novo item :/"
+        logger.warning(f"Erro ao adicionar empresa '{empresa.nome}', {error_msg}")
+        return {"mesage": error_msg}, 400
 
 
 @app.get('/empresa', tags=[empresa_tag],

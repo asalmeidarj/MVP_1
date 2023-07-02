@@ -86,7 +86,7 @@ def get_empresas():
     empresas = session.query(Empresa).all()
     print(empresas)
     if not empresas:
-        error_msg = "Empresa não encontrado na base :/"
+        error_msg = "Empresa não encontrada na base :/"
         logger.warning(f"Erro ao buscar por lista de empresas. {error_msg}")
         return {"mesage": error_msg}, 400
     else:

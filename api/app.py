@@ -1,10 +1,11 @@
 from email.mime import base
+from http import HTTPStatus
 from sqlalchemy.exc import IntegrityError
 
 from flask_openapi3 import Info, Tag
 from flask_openapi3 import OpenAPI
 from flask_cors import CORS
-from flask import redirect
+from flask import redirect, request
 from model import Session, Empresa
 from logger import logger
 from schemas import *
@@ -25,17 +26,19 @@ def home():
 
 @app.post('/empresa', tags=[empresa_tag],
           responses={"200": EmpresaViewSchema, "409": ErrorSchema, "400": ErrorSchema})
-def add_empresa(form: EmpresaSchema):
+def add_empresa():
     """Adiciona um novo Empresa à base de dados
 
     Retorna uma representação dos empresas e comentários associados.
     """
+    body = request.get_json()
+
+    nome = body.get("nome")
+    descricao = body.get("descricao")
+
     session = Session()
-    empresa = Empresa(
-        nome=form.nome,
-        descricao=form.descricao
-        )
-    
+    empresa = Empresa(nome=nome, descricao=descricao)
+     
     logger.debug(f"Adicionando empresa de nome: '{empresa.nome}'")
     try:
         # adicionando empresa
@@ -66,7 +69,7 @@ def get_empresa(query: EmpresaBuscaSchema):
     session = Session()
     empresa = session.query(Empresa).filter(Empresa.id == empresa_id).first()
     if not empresa:
-        error_msg = "Empresa não encontrado na base :/"
+        error_msg = "Empresa não encontrada na base :/"
         logger.warning(f"Erro ao buscar empresa '{empresa_id}', {error_msg}")
         return {"mesage": error_msg}, 400
     else:

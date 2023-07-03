@@ -11,7 +11,7 @@ from logger import logger
 from schemas import *
 
 
-info = Info(title="Minha querida API", version="1.0.0")
+info = Info(title="API de controle de contratos terceirizados", version="1.0.0")
 app = OpenAPI(__name__, info=info)
 CORS(app)
 
@@ -29,10 +29,20 @@ def home():
 def add_empresa(body: EmpresaBodySchema):
     """Adiciona um novo Empresa à base de dados
 
-    Retorna uma representação dos empresas e comentários associados.
+    Retorna uma representação da empresa.
     """
     session = Session()
-    empresa = Empresa(nome=body.nome, descricao=body.descricao)
+    empresa = Empresa(
+        nome=body.nome,
+        cnpj=body.cnpj,
+        cidade=body.cidade,
+        bairro=body.bairro,
+        complemento=body.complemento,
+        estado=body.estado,
+        logradouro=body.logradouro,
+        numero=body.numero,    
+        descricao=body.descricao
+    )
      
     logger.debug(f"Adicionando empresa de nome: '{empresa.nome}'")
     try:
@@ -43,7 +53,7 @@ def add_empresa(body: EmpresaBodySchema):
         logger.debug(f"Adicionado empresa de nome: '{empresa.nome}'")
         return apresenta_empresa(empresa), 200
     except IntegrityError as e:
-        error_msg = "Empresa de mesmo nome já salvo na base :/"
+        error_msg = "Empresa de mesmo cnpj já salvo na base :/"
         logger.warning(f"Erro ao adicionar empresa '{empresa.nome}', {error_msg}")
         return {"mesage": error_msg}, 409
     except Exception as e:

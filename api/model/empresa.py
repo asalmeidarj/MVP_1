@@ -31,15 +31,22 @@ class Empresa(Base):
             complemento:str = None,
             bairro:str = None,
             cidade:str = None,
-            estado:str = None,
+            estado:str = None
     ):
         """
         Cria uma Empresa
 
         Arguments:
             nome: nome da empresa.
+            cnpj: cnpj da empresa.
             descricao: descrição da empresa.
-            data_insercao: data de quando o empresa foi inserido à base
+            logradouro: logradouro da empresa.
+            numero: numero da empresa.
+            complemento: complemento da empresa.
+            bairro: bairro da empresa.
+            cidade: cidade da empresa.
+            estado: estado da empresa.
+            data_insercao: data de quando o empresa foi inserido à base.
         """
 
         timeZone = pytz.timezone('America/Sao_Paulo')

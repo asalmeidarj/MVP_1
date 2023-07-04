@@ -6,7 +6,7 @@ from flask_openapi3 import Info, Tag
 from flask_openapi3 import OpenAPI
 from flask_cors import CORS
 from flask import redirect, request
-from model import Session, Empresa
+from model import Session, Empresa, Cargo
 from logger import logger
 from schemas import *
 
@@ -17,6 +17,7 @@ CORS(app)
 
 # definindo tags
 empresa_tag = Tag(name="Empresa", description="Adição, visualização e remoção de empresas à base")
+cargo_tag = Tag(name="Cargo", description="Adição, visualização e remoção de cargos à base")
 
 
 @app.get('/')
@@ -127,4 +128,99 @@ def del_empresa(query: EmpresaBuscaSchema):
     else: 
         error_msg = "Empresa não encontrado na base :/"
         logger.warning(f"Erro ao deletar empresa #'{empresa_id}', {error_msg}")
+        return {"mesage": error_msg}, 400
+
+
+@app.post('/cargo', tags=[cargo_tag],
+          responses={"200": CargoViewSchema, "409": ErrorSchema, "400": ErrorSchema})
+def add_cargo(body: CargoBodySchema):
+    """Adiciona um novo Cargo à base de dados
+
+    Retorna uma representação do cargo.
+    """
+    session = Session()
+    cargo = Cargo(nome=body.nome)
+     
+    logger.debug(f"Adicionando cargo de nome: '{cargo.nome}'")
+    try:
+        # adicionando cargo
+        session.add(cargo)
+        # efetivando o camando de adição de novo item na tabela
+        session.commit()
+        logger.debug(f"Adicionado cargo de nome: '{cargo.nome}'")
+        return apresenta_cargo(cargo), 200
+    except IntegrityError as e:
+        error_msg = "Cargo de mesmo nome já salvo na base :/"
+        logger.warning(f"Erro ao adicionar cargo '{cargo.nome}', {error_msg}")
+        return {"mesage": error_msg}, 409
+    except Exception as e:
+        error_msg = "Não foi possível salvar novo item :/"
+        logger.warning(f"Erro ao adicionar cargo '{cargo.nome}', {error_msg}")
+        return {"mesage": error_msg}, 400
+
+
+@app.get('/cargo', tags=[cargo_tag],
+         responses={"200": CargoViewSchema, "404": ErrorSchema})
+def get_cargo(query: CargoBuscaSchema):
+    """Faz a busca por um cargo a partir do id do cargo
+
+    Retorna uma representação dos cargos.
+    """
+    cargo_id = query.id
+    logger.debug(f"Coletando dados sobre cargo #{cargo_id}")
+    session = Session()
+    cargo = session.query(Cargo).filter(Cargo.id == cargo_id).first()
+    if not cargo:
+        error_msg = "Cargo não encontrada na base :/"
+        logger.warning(f"Erro ao buscar cargo '{cargo_id}', {error_msg}")
+        return {"mesage": error_msg}, 400
+    else:
+        logger.debug(f"Cargo encontrado: '{cargo.nome}'")
+        return apresenta_cargo(cargo), 200
+
+
+@app.get('/cargos', tags=[cargo_tag],
+         responses={"200": CargoListaViewSchema, "404": ErrorSchema})
+def get_cargos():
+    """Lista todos os cargos cadastrados na base
+
+    Retorna uma lista de representações de cargos.
+    """
+    logger.debug(f"Coletando lista de cargos")
+    session = Session()
+    cargos = session.query(Cargo).all()
+    if not cargos:
+        error_msg = "Cargo não encontrada na base :/"
+        logger.warning(f"Erro ao buscar por lista de cargos. {error_msg}")
+        return {"mesage": error_msg}, 400
+    else:
+        logger.debug(f"Retornando lista de cargos")
+        return apresenta_lista_cargo(cargos), 200
+
+
+@app.delete('/cargo', tags=[cargo_tag],
+            responses={"200": CargoDelSchema, "404": ErrorSchema})
+def del_cargo(query: CargoBuscaSchema):
+    """Deleta um Cargo a partir do id informado
+
+    Retorna uma mensagem de confirmação da remoção.
+    """
+    cargo_id = query.id
+    cargo_nome = query.nome
+
+    logger.debug(f"Deletando dados sobre cargo #{cargo_id}")
+    session = Session()
+
+    if cargo_id:
+        count = session.query(Cargo).filter(Cargo.id == cargo_id).delete()
+    else:
+        count = session.query(Cargo).filter(Cargo.nome == cargo_nome).delete()
+
+    session.commit()
+    if count:
+        logger.debug(f"Deletado cargo #{cargo_id}")
+        return {"mesage": "Cargo removido", "id": cargo_id}
+    else: 
+        error_msg = "Cargo não encontrado na base :/"
+        logger.warning(f"Erro ao deletar cargo #'{cargo_id}', {error_msg}")
         return {"mesage": error_msg}, 400

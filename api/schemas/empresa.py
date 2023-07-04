@@ -32,7 +32,8 @@ def apresenta_empresa(empresa):
     return {
         "id": empresa.id,
         "nome": empresa.nome,
-        "descricao": empresa.descricao,
+        "cnpj": empresa.cnpj,
+        "data_insercao": empresa.data_insercao
     }
 
 

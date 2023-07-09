@@ -5,7 +5,7 @@ from typing import Optional, List
 
 class FuncionarioBodySchema(BaseModel):
     nome: str = "NOME DO FUNCIONARIO"
-    cnpj: str = "CNPJ DO FUNCIONARIO"
+    cpf: str = "CPF DO FUNCIONARIO"
     telefone: str = "TELEFONE DO FUNCIONARIO"
     logradouro: Optional[str] = "LOGRADOURO DO FUNCIONARIO"
     numero: Optional[str] = "NUMERO DO FUNCIONARIO"

@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from typing import Optional, List
 
+from share.utils.date import formatDatetimeISO8601
+
 
 class CargoEmpresaBodySchema(BaseModel):
     cargo_id: int = 1
@@ -28,19 +30,6 @@ class CargoListaViewSchema(BaseModel):
 
 def apresenta_cargo_empresa(cargo_empresa):
 
-    ano = cargo_empresa.data_insercao.year
-    mes = cargo_empresa.data_insercao.month
-    dia = cargo_empresa.data_insercao.day
-    mes = f"0{mes}" if mes < 10 else mes
-    dia = f"0{dia}" if dia < 10 else dia
-
-    horas = cargo_empresa.data_insercao.hour
-    minutos = cargo_empresa.data_insercao.minute
-    segundos = cargo_empresa.data_insercao.second
-    minutos = f"0{minutos}" if minutos < 10 else minutos
-    segundos = f"0{segundos}" if segundos < 10 else segundos
-
-
     return {
         "id": cargo_empresa.id,
         "cargo_id": cargo_empresa.cargo.id,
@@ -49,7 +38,7 @@ def apresenta_cargo_empresa(cargo_empresa):
         "empresa_nome": cargo_empresa.empresa_nome,
         "valor_contrato_diaria": cargo_empresa.valor_contrato_diaria,
         "valor_pago_diaria": cargo_empresa.valor_pago_diaria,
-        "data_insercao": f"{ano}-{mes}-{dia}T{horas}:{segundos}:{minutos}"
+        "data_insercao": formatDatetimeISO8601(cargo_empresa.data_insercao)
     }
 
 

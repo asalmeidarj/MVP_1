@@ -348,3 +348,50 @@ def get_funcionario(query: FuncionarioBuscaSchema):
     else:
         logger.debug(f"Funcionario encontrado: '{funcionario.nome}'")
         return apresenta_funcionario(funcionario), 200
+    
+@app.get('/funcionarios', tags=[funcionario_tag],
+         responses={"200": FuncionarioListaViewSchema, "404": ErrorSchema})
+def get_funcionarios():
+    """Lista todos os funcionarios cadastrados na base
+
+    Retorna uma lista de representações de funcionarios.
+    """
+    logger.debug(f"Coletando lista de funcionarios")
+    session = Session()
+    funcionarios = session.query(Funcionario).all()
+    print(funcionarios)
+    if not funcionarios:
+        error_msg = "Funcionario não encontrada na base :/"
+        logger.warning(f"Erro ao buscar por lista de funcionarios. {error_msg}")
+        return {"mesage": error_msg}, 400
+    else:
+        logger.debug(f"Retornando lista de funcionarios")
+        return apresenta_lista_funcionario(funcionarios), 200
+
+
+@app.delete('/funcionario', tags=[funcionario_tag],
+            responses={"200": FuncionarioDelSchema, "404": ErrorSchema})
+def del_funcionario(query: FuncionarioBuscaSchema):
+    """Deleta um Funcionario a partir do id informado
+
+    Retorna uma mensagem de confirmação da remoção.
+    """
+    funcionario_id = query.id
+    funcionario_cpf = query.cpf
+
+    logger.debug(f"Deletando dados sobre funcionario #{funcionario_id}")
+    session = Session()
+
+    if funcionario_id:
+        count = session.query(Funcionario).filter(Funcionario.id == funcionario_id).delete()
+    else:
+        count = session.query(Funcionario).filter(Funcionario.cpf == funcionario_cpf).delete()
+
+    session.commit()
+    if count:
+        logger.debug(f"Deletado funcionario #{funcionario_id}")
+        return {"mesage": "Funcionario removido", "id": funcionario_id}
+    else: 
+        error_msg = "Funcionario não encontrado na base :/"
+        logger.warning(f"Erro ao deletar funcionario #'{funcionario_id}', {error_msg}")
+        return {"mesage": error_msg}, 400

@@ -6,7 +6,7 @@ from flask_openapi3 import Info, Tag
 from flask_openapi3 import OpenAPI
 from flask_cors import CORS
 from flask import redirect, request
-from model import Session, Empresa, Cargo, Cargo_empresa
+from model import Session, Empresa, Cargo, Cargo_empresa, Funcionario
 from logger import logger
 from schemas import *
 
@@ -19,6 +19,7 @@ CORS(app)
 empresa_tag = Tag(name="Empresa", description="Adição, visualização e remoção de empresas à base")
 cargo_tag = Tag(name="Cargo", description="Adição, visualização e remoção de cargos à base")
 cargo_empresa_tag = Tag(name="Cargo_empresa", description="Adição, visualização e remoção de cargos da empresa à base")
+funcionario_tag = Tag(name="Funcionario", description="Adição, visualização e remoção de funcionarios à base")
 
 
 @app.get('/')
@@ -288,3 +289,62 @@ def get_cargo_empresa(query: CargoEmpresaBuscaSchema):
     else:
         logger.debug(f"Cargo encontrado: '{cargo_empresa.cargo.nome}'")
         return apresenta_cargo_empresa(cargo_empresa), 200
+
+
+@app.post('/funcionario', tags=[funcionario_tag],
+          responses={"200": FuncionarioViewSchema, "409": ErrorSchema, "400": ErrorSchema})
+def add_funcionario(body: FuncionarioBodySchema):
+    """Adiciona um novo Funcionario à base de dados
+
+    Retorna uma representação do Funcionario.
+    """
+    session = Session()
+    
+    funcionario = Funcionario(
+        nome=body.nome.upper(),
+        cpf=body.cpf,
+        telefone=body.telefone,
+        cidade=body.cidade.upper(),
+        bairro=body.bairro.upper(),
+        complemento=body.complemento.upper(),
+        estado=body.estado.upper(),
+        logradouro=body.logradouro.upper(),
+        numero=body.numero
+    )
+     
+    logger.debug(f"Adicionando funcionario de nome: '{funcionario.nome}'")
+    try:
+        # adicionando funcionario
+        session.add(funcionario)
+        # efetivando o camando de adição de novo item na tabela
+        session.commit()
+        logger.debug(f"Adicionado funcionario de nome: '{funcionario.nome}'")
+        return apresenta_funcionario(funcionario), 200
+    except IntegrityError as e:
+        error_msg = "Funcionario de mesmo cpf já salvo na base :/"
+        logger.warning(f"Erro ao adicionar funcionario '{funcionario.nome}', {error_msg}")
+        return {"mesage": error_msg}, 409
+    except Exception as e:
+        error_msg = "Não foi possível salvar novo item :/"
+        logger.warning(f"Erro ao adicionar funcionario '{funcionario.nome}', {error_msg}")
+        return {"mesage": error_msg}, 400
+
+
+@app.get('/funcionario', tags=[funcionario_tag],
+         responses={"200": FuncionarioViewSchema, "404": ErrorSchema})
+def get_funcionario(query: FuncionarioBuscaSchema):
+    """Faz a busca por um funcionario a partir do id do funcionario.
+
+    Retorna uma representação dos funcionarios.
+    """
+    funcionario_id = query.id
+    logger.debug(f"Coletando dados sobre funcionario #{funcionario_id}")
+    session = Session()
+    funcionario = session.query(Funcionario).filter(Funcionario.id == funcionario_id).first()
+    if not funcionario:
+        error_msg = "Funcionario não encontrada na base :/"
+        logger.warning(f"Erro ao buscar cargo '{funcionario_id}', {error_msg}")
+        return {"mesage": error_msg}, 400
+    else:
+        logger.debug(f"Funcionario encontrado: '{funcionario.nome}'")
+        return apresenta_funcionario(funcionario), 200

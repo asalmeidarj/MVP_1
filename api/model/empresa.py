@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, Integer, DateTime
+from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from  model import Base
@@ -10,7 +11,7 @@ class Empresa(Base):
     __tablename__ = 'empresa'
 
     id = Column("pk_empresa", Integer, primary_key=True)
-    nome = Column(String(140))
+    nome = Column(String(40))
     cnpj = Column(String(14), unique=True)
     descricao = Column(String(4000))
     logradouro = Column(String(30))
@@ -20,6 +21,12 @@ class Empresa(Base):
     cidade = Column(String(20))
     estado = Column(String(20))
     data_insercao = Column(DateTime, default=datetime.now())
+
+    # Definição do relacionamento entre o empresa e o cargo_empresa.
+    # Essa relação é implicita, não está salva na tabela 'empresa',
+    # mas aqui estou deixando para SQLAlchemy a responsabilidade
+    # de reconstruir esse relacionamento.
+    cargo_empresas = relationship("Cargo_empresa")
 
     def __init__(
             self, 

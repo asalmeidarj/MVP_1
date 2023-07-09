@@ -20,7 +20,7 @@ class CargoEmpresaViewSchema(BaseModel):
     empresa_nome: str = "NOME DA EMREPSA"
     valor_contrato_diaria: float = 500
     valor_pago_diaria: float = 200
-    data_insercao: str = "Sat, 08 Jul 2023 19:59:04 GMT"
+    data_insercao: str = "2023-07-09T15:17:41"
 
 class CargoListaViewSchema(BaseModel):
     cargo_empresas: List[CargoEmpresaViewSchema]

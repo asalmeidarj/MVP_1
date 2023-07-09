@@ -54,7 +54,7 @@ class Funcionario(Base):
         timeZone = pytz.timezone('America/Sao_Paulo')
 
         self.nome = nome
-        self.cnpj = cpf
+        self.cpf = cpf
         self.telefone = telefone
         self.logradouro = logradouro
         self.numero = numero

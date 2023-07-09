@@ -2,7 +2,7 @@ from unicodedata import category
 from pydantic import BaseModel
 from typing import Optional, List
 
-from api.share.utils.date import formatDatetimeISO8601
+from share.utils.date import formatDatetimeISO8601
 
 
 class FuncionarioBodySchema(BaseModel):
@@ -18,7 +18,7 @@ class FuncionarioBodySchema(BaseModel):
 
 class FuncionarioBuscaSchema(BaseModel):
     id: Optional[int] = 1
-    nome: Optional[str] = "NOME DO FUNCIONARIO"
+    cpf: Optional[str] = "CPF DO FUNCIONARIO"
 
 class FuncionarioViewSchema(BaseModel):
     id: int = 1

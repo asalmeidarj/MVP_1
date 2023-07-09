@@ -6,7 +6,7 @@ from flask_openapi3 import Info, Tag
 from flask_openapi3 import OpenAPI
 from flask_cors import CORS
 from flask import redirect, request
-from model import Session, Empresa, Cargo
+from model import Session, Empresa, Cargo, Cargo_empresa
 from logger import logger
 from schemas import *
 
@@ -18,6 +18,7 @@ CORS(app)
 # definindo tags
 empresa_tag = Tag(name="Empresa", description="Adição, visualização e remoção de empresas à base")
 cargo_tag = Tag(name="Cargo", description="Adição, visualização e remoção de cargos à base")
+cargo_empresa_tag = Tag(name="Cargo_empresa", description="Adição, visualização e remoção de cargos da empresa à base")
 
 
 @app.get('/')
@@ -34,13 +35,13 @@ def add_empresa(body: EmpresaBodySchema):
     """
     session = Session()
     empresa = Empresa(
-        nome=body.nome,
+        nome=body.nome.upper(),
         cnpj=body.cnpj,
-        cidade=body.cidade,
-        bairro=body.bairro,
-        complemento=body.complemento,
-        estado=body.estado,
-        logradouro=body.logradouro,
+        cidade=body.cidade.upper(),
+        bairro=body.bairro.upper(),
+        complemento=body.complemento.upper(),
+        estado=body.estado.upper(),
+        logradouro=body.logradouro.upper(),
         numero=body.numero,    
         descricao=body.descricao
     )
@@ -119,7 +120,7 @@ def del_empresa(query: EmpresaBuscaSchema):
     if empresa_id:
         count = session.query(Empresa).filter(Empresa.id == empresa_id).delete()
     else:
-        count = session.query(Empresa).filter(Empresa.nome == empresa_nome).delete()
+        count = session.query(Empresa).filter(Empresa.nome == empresa_nome.upper()).delete()
 
     session.commit()
     if count:
@@ -139,7 +140,7 @@ def add_cargo(body: CargoBodySchema):
     Retorna uma representação do cargo.
     """
     session = Session()
-    cargo = Cargo(nome=body.nome)
+    cargo = Cargo(nome=body.nome.upper())
      
     logger.debug(f"Adicionando cargo de nome: '{cargo.nome}'")
     try:
@@ -214,7 +215,7 @@ def del_cargo(query: CargoBuscaSchema):
     if cargo_id:
         count = session.query(Cargo).filter(Cargo.id == cargo_id).delete()
     else:
-        count = session.query(Cargo).filter(Cargo.nome == cargo_nome).delete()
+        count = session.query(Cargo).filter(Cargo.nome == cargo_nome.upper()).delete()
 
     session.commit()
     if count:
@@ -224,3 +225,66 @@ def del_cargo(query: CargoBuscaSchema):
         error_msg = "Cargo não encontrado na base :/"
         logger.warning(f"Erro ao deletar cargo #'{cargo_id}', {error_msg}")
         return {"mesage": error_msg}, 400
+    
+@app.post('/cargo_empresa', tags=[cargo_empresa_tag],
+          responses={"200": CargoEmpresaViewSchema, "409": ErrorSchema, "400": ErrorSchema})
+def add_cargo_empresa(body: CargoEmpresaBodySchema):
+    """Adiciona um novo Cargo da empresa à base de dados
+
+    Retorna uma representação do cargo.
+    """
+    session = Session()
+
+    cargo = None
+    empresa = None
+    if body.cargo_id and body.empresa_id:
+        cargo = session.query(Cargo).filter(Cargo.id == body.cargo_id).first()
+        empresa = session.query(Empresa).filter(Empresa.id == body.empresa_id).first()
+
+    
+    cargo_empresa = Cargo_empresa(
+        empresa=empresa,
+        cargo=cargo,
+        valor_contrato_diaria=body.valor_contrato_diaria,
+        valor_pago_diaria=body.valor_pago_diaria,
+        uq_cargo_empresa_id=f"{str(body.cargo_id)}-{str(body.empresa_id)}"
+    )
+
+ 
+    logger.debug(f"Adicionando cargo de nome: '{cargo_empresa.cargo}'")
+    try:
+        # adicionando cargo
+        session.add(cargo_empresa)
+        # efetivando o camando de adição de novo item na tabela
+        session.commit()
+        logger.debug(f"Adicionado cargo de nome: '{cargo_empresa.cargo.nome}'")
+        return apresenta_cargo_empresa(cargo_empresa), 200
+    except IntegrityError as e:
+        error_msg = "Cargo de mesmo nome já salvo na base para esta empresa:/"
+        logger.warning(f"Erro ao adicionar cargo, {error_msg}")
+        return {"mesage": error_msg}, 409
+    except Exception as e:
+        error_msg = "Não foi possível salvar novo item :/"
+        logger.warning(f"Erro ao adicionar cargo, {error_msg}")
+        return {"mesage": error_msg}, 400
+
+@app.get('/cargo_empresa', tags=[cargo_empresa_tag],
+         responses={"200": CargoEmpresaViewSchema, "404": ErrorSchema})
+def get_cargo_empresa(query: CargoEmpresaBuscaSchema):
+    """Faz a busca por um cargo a partir do id do cargo
+
+    Retorna uma representação dos cargos.
+    """
+    cargo_id = query.cargo_id
+    empresa_id = query.empresa_id
+
+    logger.debug(f"Coletando dados sobre cargo #{cargo_id}")
+    session = Session()
+    cargo_empresa = session.query(Cargo_empresa).filter(Cargo_empresa.cargo_id == cargo_id, Cargo_empresa.empresa_id == empresa_id).first()
+    if not cargo_empresa:
+        error_msg = "Cargo não encontrada na base :/"
+        logger.warning(f"Erro ao buscar cargo '{cargo_id}', {error_msg}")
+        return {"mesage": error_msg}, 400
+    else:
+        logger.debug(f"Cargo encontrado: '{cargo_empresa.cargo.nome}'")
+        return apresenta_cargo_empresa(cargo_empresa), 200

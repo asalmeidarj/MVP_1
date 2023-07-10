@@ -9,6 +9,7 @@ from model.empresa import Empresa
 from model.cargo import Cargo
 from model.cargo_empresa import Cargo_empresa
 from model.funcionario import Funcionario
+from model.ponto import Ponto
 
 db_path = "database/"
 # Verifica se o diretorio não existe

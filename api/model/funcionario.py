@@ -23,6 +23,8 @@ class Funcionario(Base):
     data_insercao = Column(DateTime, default=datetime.now())
 
 
+    pontos = relationship("Ponto")
+    
     def __init__(
             self, 
             nome:str, 

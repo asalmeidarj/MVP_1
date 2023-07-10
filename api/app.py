@@ -6,7 +6,7 @@ from flask_openapi3 import Info, Tag
 from flask_openapi3 import OpenAPI
 from flask_cors import CORS
 from flask import redirect, request
-from model import Session, Empresa, Cargo, Cargo_empresa, Funcionario
+from model import Session, Empresa, Cargo, Cargo_empresa, Funcionario, Ponto
 from logger import logger
 from schemas import *
 
@@ -20,6 +20,7 @@ empresa_tag = Tag(name="Empresa", description="Adição, visualização e remoç
 cargo_tag = Tag(name="Cargo", description="Adição, visualização e remoção de cargos à base")
 cargo_empresa_tag = Tag(name="Cargo_empresa", description="Adição, visualização e remoção de cargos da empresa à base")
 funcionario_tag = Tag(name="Funcionario", description="Adição, visualização e remoção de funcionarios à base")
+ponto_tag = Tag(name="Ponto", description="Adição, visualização e remoção de ponto à base")
 
 
 @app.get('/')
@@ -395,3 +396,55 @@ def del_funcionario(query: FuncionarioBuscaSchema):
         error_msg = "Funcionario não encontrado na base :/"
         logger.warning(f"Erro ao deletar funcionario #'{funcionario_id}', {error_msg}")
         return {"mesage": error_msg}, 400
+    
+
+@app.post('/ponto', tags=[ponto_tag],
+          responses={"200": PontoViewSchema, "409": ErrorSchema, "400": ErrorSchema})
+def add_ponto(body: PontoBodySchema):
+    """Adiciona um novo ponto à base de dados
+
+    Retorna uma representação do ponto.
+    """
+    session = Session()
+
+    cargo_empresa = None
+    funcionario = None
+    if body.cargo_empresa_id and body.funcionario_id:
+        cargo_empresa = session.query(Cargo_empresa).filter(Cargo_empresa.id == body.cargo_empresa_id).first()
+        funcionario = session.query(Funcionario).filter(Funcionario.id == body.funcionario_id).first()
+    
+
+    ponto = Ponto(
+        cargo_empresa=cargo_empresa,
+        funcionario=funcionario,
+        ano=body.ano,
+        mes=body.mes,
+        dia=body.dia,
+        hora_entrada=body.hora_entrada,
+        minutos_entrada=body.minutos_entrada,
+        hora_saida=body.hora_saida,
+        minutos_saida=body.minutos_saida,
+        inicio_hora_intervalo=body.inicio_hora_intervalo,
+        inicio_minutos_intervalo=body.inicio_minutos_intervalo,
+        final_hora_intervalo=body.final_hora_intervalo,
+        final_minutos_intervalo=body.final_minutos_intervalo,
+        eh_dia_extra=body.eh_dia_extra
+    )
+   
+    logger.debug(f"Adicionando ponto de funcionario de nome: '{funcionario.nome}'")
+    try:
+        # adicionando ponto de funcionario
+        session.add(ponto)
+        # efetivando o camando de adição de novo item na tabela
+        session.commit()
+        logger.debug(f"Adicionado ponto de funcionario de nome: '{funcionario.nome}'")
+        return apresenta_ponto(ponto), 200
+    except IntegrityError as e:
+        error_msg = "Ocorreu um erro :/"
+        logger.warning(f"Erro ao adicionar funcionario '{funcionario.nome}', {error_msg}")
+        return {"mesage": error_msg}, 409
+    except Exception as e:
+        error_msg = "Não foi possível salvar novo item :/"
+        logger.warning(f"Erro ao adicionar ponto de funcionario '{funcionario.nome}', {error_msg}")
+        return {"mesage": error_msg}, 400
+

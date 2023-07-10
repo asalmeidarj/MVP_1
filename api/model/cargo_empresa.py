@@ -23,6 +23,8 @@ class Cargo_empresa(Base):
     uq_cargo_empresa_id = Column(String(40), unique=True)
     data_insercao = Column(DateTime, default=datetime.now())
 
+    pontos = relationship("Ponto")
+
     def __init__(
             self, 
             cargo: Cargo,
